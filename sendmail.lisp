@@ -87,7 +87,6 @@
 
     (close sendmail)))
       
-
 (defmacro with-email ((stream to &key
 			      cc
 			      bcc

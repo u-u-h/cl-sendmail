@@ -49,6 +49,14 @@
       (read-sequence out in)
       out)))
 
+(defun read-stream (stream)
+  "Reads a stream and returns an unsigned byte array holding the contents."
+  (babel-streams:with-output-to-sequence (dst :element-type '(unsigned-byte 8))
+    (let ((scratch (make-array 4096 :element-type '(unsigned-byte 8))))
+      (loop :for read = (read-sequence scratch stream)
+	 :while (plusp read) 
+	 :do (write-sequence scratch dst :end read)))))
+
 
 (defun process-user-name ()
   "Return the user name of the user running the current process. 
