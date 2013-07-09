@@ -26,6 +26,22 @@
   "The location of the sendmail program")
 
 
+(defparameter +cr-lf-tab+ (coerce `(,#\return #\linefeed #\tab) 'string)
+  "The CR-LF-TAB header splitting string as per rfc822.")
+
+(defun clean-header-field (string)
+  "Remove CR and LF from string as per rfc822 3.1.2."
+  (remove-if #'(lambda (c) (or (eq c #\Return) (eq c #\Linefeed))) string))
+
+(defun format-header (stream field args)
+  "Output a header to STREAM in accordance with rfc822."
+  (let ((header-data (format nil "~A: ~{~A~^,~}" field (if (consp args) args `(,args)))))
+    (write-sequence (split-string +cr-lf-tab+ 
+				  (clean-header-field header-data)
+				  998)
+		    stream)
+    (terpri stream)))
+
 (defun send-email (mail-output-stream)
   "Handles the actual sending of the email via the sendmail program"
   (unless (listp (to mail-output-stream))
@@ -64,23 +80,8 @@
 	    (change-class mail-output-stream
 			  'multipart-mail-output-stream)))))
 
-    (mapc (lambda (header value)
-	    (when value
-	      (format sendmail "~A: ~A~{,~A~}~%" 
-		      header
-		      (if (listp value)
-			  (first value)
-			  value)
-		      (if (listp value)
-			  (rest value)
-			  nil))))
-	  (list "To" "Cc" "From" "Reply-To" "Subject")
-	  (list (to mail-output-stream)
-		(cc mail-output-stream)
-		(from mail-output-stream)
-		(reply-to mail-output-stream)
-		(subject mail-output-stream)))
-    
+    (dolist (header/val (all-headers mail-output-stream))
+      (format-header sendmail (car header/val) (cdr header/val)))
 
     (print-mime sendmail mail-output-stream t t)
 
