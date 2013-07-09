@@ -115,10 +115,6 @@ be used directly. Use the other streams"))
   (clear-output (mail-output-stream-stream stream)))
 
 
-(defmethod stream-line-column ((stream mail-output-stream-mixin))
-  nil)
-
-
 (defmethod close ((stream mail-output-stream-mixin) &key abort)
   ; TODO: The following line is probably important.
   ; Why does it wreak havoc in CMUCL?

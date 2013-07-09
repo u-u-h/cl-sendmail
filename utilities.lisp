@@ -49,3 +49,126 @@
       (read-sequence out in)
       out)))
 
+
+(defun process-user-name ()
+  "Return the user name of the user running the current process. 
+Returns a string, or NIL on unsupported lisp implementations."
+  #+sbcl (sb-unix:uid-username 
+	  (sb-unix:unix-getuid))
+  #+cmu (unix:user-info-name
+	 (unix:unix-getpwuid
+	  (unix:unix-getuid)))
+  #+allegro (system:user-name))
+
+;; belongs into external-program/allegro.lisp
+(in-package #:external-program)
+
+(defstruct allegro-process
+  input output error pid reap-result)
+
+;; At any given time only one process will be alive on the OS side and occupy a PID
+;; However: the caller may hang on to our process object even after its os process has
+;; died and the pid is re-used. Therefore for each PID we saw we store a weak key-only 
+;; hash table with the process objects, to let the GC clean up for us
+
+(defparameter *allegro-process-table*
+  (make-hash-table :test #'eql )
+  "A hash table keyed on the PID of all processes we create
+through run-shell-command to enable reaping dead children. 
+Values are weak key-only hash tables containing process structures.")
+
+(defun store-process (process)
+  (let ((tab (or (gethash (allegro-process-pid process) *allegro-process-table*)
+		 (setf (gethash (allegro-process-pid process) *allegro-process-table*)
+		       (make-hash-table :test #'eq :weak-keys T :values nil)))))
+    (setf (gethash process tab) process)))
+
+(defun find-process-for-pid (pid)
+  "Find the process structure for PID that has not been reaped."
+  (let ((tab (gethash pid *allegro-process-table*)))
+    (if tab
+	(or (loop :for process :being :each :hash-key :of tab
+	       :when (null (allegro-process-reap-result))
+	       :return process)
+	    (error "PID ~A has no unreaped process." pid))
+	(error "PID ~A unknown." pid))))
+
+(defmethod start (program args
+		  &key input output error environment replace-environment-p
+		    &allow-other-keys)
+  (when replace-environment-p
+    (warn "replace-environment unsupported on Allegro CL."))
+  (when (and (or (eq nil output)
+		 (eq nil error))
+	     (not (probe-file #p"/dev/null")))
+    (error "Cannot suppress output on this system."))
+  (let* ((in (cond
+	     ;; NIL and T are different on allegro
+	     ((eq NIL input) (make-string-input-stream ""))
+	     ((eq T input) nil)
+	     (T input)))
+	 (out (cond
+	     ;; NIL and T are different on allegro
+	     ((eq NIL output) (open #p"/dev/null" :direction :output :if-exists :supersede))
+	     ((eq T input) nil)
+	     (T input)))
+	 (err (cond
+	     ;; NIL and T are different on allegro
+	     ((eq NIL input) (open #p"/dev/null" :direction :output :if-exists :supersede))
+	     ((eq T input) nil)
+	     ((eq :OUTPUT output) out)
+	     (T input))))
+    (multiple-value-bind (instream outstream errstream pid)
+	(excl:run-shell-command
+	 (format nil "~A~{~^ ~A~}" program args)
+	 :wait nil :separate-streams T
+	 :input in :output out :error-output err
+	 :environment environment)
+      (let ((process (make-allegro-process :input instream :output outstream :error errstream :pid pid
+					   :reap-result nil)))
+	(store-process process)
+	process))))
+
+(defmethod process-p ((process allegro-process))
+  T)
+
+(defmethod signal-process (process (signal symbol))
+  (let ((sig (assoc signal *signal-mapping*)))
+    (if (not sig)
+	(error "Symbolic signal ~A not supported." signal)
+	(signal-process process sig))))
+
+(defmethod signal-process ((process allegro-process) (signal integer))
+  (excl.osi:kill (allegro-process-pid process) signal))
+
+(defmethod process-input-stream ((process allegro-process))
+  (allegro-process-input process))
+
+(defmethod process-output-stream ((process allegro-process))
+  (allegro-process-output process))
+
+(defmethod process-error-stream ((process allegro-process))
+  (allegro-process-error process))
+
+(defmethod process-id ((process allegro-process))
+  (allegro-process-pid process))
+
+(defmethod process-status ((process allegro-process))
+  ;; we mis-use this as a hook to reap processes, in the hope that the caller will
+  ;; do sensible things to allow us to reap all processes we created:
+  ;; whenever we are called we update exit status of all completed processes
+  ;; before inquiring and answering
+  (loop :with status :and pid :and sig
+     :do (multiple-value-setq (status pid sig)
+	   (system:reap-os-subprocess :wait nil))
+     :while pid ;; some process exited, and we can store its status
+     :do (let ((process (find-process-for-pid pid)))
+	   (setf (allegro-process-reap-result process)
+		 (if sig
+		     (list :SIGNALED sig)
+		     (list :EXITED status)))))
+  ;; ok, check on process now
+  (if (allegro-process-reap-result process)
+      (apply #'values (allegro-process-reap-result process))
+      (values :RUNNING)))
+

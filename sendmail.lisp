@@ -34,19 +34,14 @@
     (setf (cc mail-output-stream) (list (cc mail-output-stream))))
   (unless (listp (bcc mail-output-stream))
     (setf (bcc mail-output-stream) (list (bcc mail-output-stream))))
-  (let ((sendmail (process-input
-		   (run-program *sendmail*
-				`("-f" ,(or (from mail-output-stream)
-					    #+sbcl (sb-unix:uid-username 
-                                                    (sb-unix:unix-getuid))
-                                            #+cmu (unix:user-info-name
-                                                   (unix:unix-getpwuid
-                                                    (unix:unix-getuid))))
-				  ,@(to mail-output-stream)
-				  ,@(cc mail-output-stream)
-				  ,@(bcc mail-output-stream))
-				:input :stream
-				:wait nil)))
+  (let ((sendmail (external-program:process-input-stream
+		   (external-program:start *sendmail*
+					   `("-f" ,(or (from mail-output-stream)
+						       (process-user-name))
+						  ,@(to mail-output-stream)
+						  ,@(cc mail-output-stream)
+						  ,@(bcc mail-output-stream))
+					   :input :stream)))
 	(mail-output-stream
 	 (cond
 	   ((attachments mail-output-stream)

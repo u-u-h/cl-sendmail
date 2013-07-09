@@ -27,11 +27,12 @@
   :author "Robert Marlow <rob@bobturf.org>"
   :maintainer "Robert Marlow <rob@bobturf.org>"
   :serial t
-  :version "0.5.0"
-  :depends-on (:cl-mime 
-	       #+sbcl :sb-bsd-sockets
+  :version "0.5.6"
+  :depends-on (:cl-mime
+	       :external-program
 	       :xmls 
-	       :xmls-tools)
+	       :xmls-tools
+	       :trivial-gray-streams)
   :components ((:file "package")
 	       (:file "utilities")
 	       (:file "classes")

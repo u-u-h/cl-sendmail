@@ -26,6 +26,7 @@
         #+sbcl :sb-ext
         #+sbcl :sb-bsd-sockets
         #+cmu :extensions
+	:trivial-gray-streams
         :mime :base64
 	:xmls :xmls-tools)
   (:nicknames :sendmail)
