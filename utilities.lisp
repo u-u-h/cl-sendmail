@@ -118,7 +118,7 @@ collected by the GC if the caller disposes of his reference before the process d
   (loop :with status :and pid :and sig
      :do (multiple-value-setq (status pid sig)
 	   (system:reap-os-subprocess :wait nil))
-     :while pid ;; some process exited, and we can store its status
+     :while (and pid (> pid 0)) ;; some process exited, and we can store its status. Note: ACL 8 and 9 may return -1 for the PID. Bug report pending.
      :do (let ((process (find-process-for-pid pid)))
 	   (setf (allegro-process-reap-result process)
 		 (if sig
