@@ -21,10 +21,6 @@
 
 (defpackage :cl-sendmail
   (:use :cl
-        #+sbcl :sb-gray
-        #+sbcl :sb-unix
-        #+sbcl :sb-ext
-        #+sbcl :sb-bsd-sockets
         #+cmu :extensions
 	:trivial-gray-streams
         :mime :base64
