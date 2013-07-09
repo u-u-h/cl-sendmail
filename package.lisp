@@ -39,9 +39,6 @@
 	   :content-type
 	   :attachments
 	   :other-headers
-	   :*smtp-server*
-	   :*smtp-port*
-	   :*mail-domain*
 	   :make-mail-stream
 	   :with-email
 	   :xmls-xhtml-to-mime))
