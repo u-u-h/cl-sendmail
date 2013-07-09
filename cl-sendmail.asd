@@ -29,6 +29,8 @@
   :serial t
   :version "0.5.6"
   :depends-on (:cl-mime
+	       :cl-base64
+	       :babel-streams
 	       :external-program
 	       :xmls 
 	       :xmls-tools

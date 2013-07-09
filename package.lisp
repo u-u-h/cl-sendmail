@@ -23,7 +23,7 @@
   (:use :cl
         #+cmu :extensions
 	:trivial-gray-streams
-        :mime :base64
+        :mime 
 	:xmls :xmls-tools)
   (:nicknames :sendmail)
   (:export :mailer-program-error

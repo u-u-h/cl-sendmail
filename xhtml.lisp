@@ -152,8 +152,8 @@ If you want to keep your XML structure intact make a copy first."
   (let ((protocol (get-protocol url)))
     (cond
       ((string-equal protocol "file")
-       (usb8-array-to-base64-string (read-file (url-path url))
-				    :columns 75))
+       (cl-base64:usb8-array-to-base64-string (read-file (url-path url))
+					      :columns 75))
       (t (error "Unsupported Protocol ~A" protocol)))))
 
 
