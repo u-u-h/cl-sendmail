@@ -9,7 +9,11 @@ http://www.bobturf.org/software/cl-mime/
 http://common-lisp.net/project/xmls/
 http://www.bobturf.org/software/xmls-tools/
 
+which are all available through recent quicklisp versions,
+together with the other dependencies:
+	babel-streams external-program trivial-gray-streams
 
-It works with SBCL and thanks to Tim Howe it should now partially work
-with CMUCL
+
+While originally written for SBCL, it now should work with CMUCL
+(thanks to Tim Howe) and Allegro CL (patches by Utz-Uwe Haus).
 
