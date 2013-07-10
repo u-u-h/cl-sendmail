@@ -81,14 +81,14 @@ Returns a string, or NIL on unsupported lisp implementations."
 ;; hash table with the process objects, to let the GC clean up for us
 
 #+allegro
-(defparameter *allegro-process-table*
+(defvar *allegro-process-table*
   (make-hash-table :test #'eql )
   "A hash table keyed on the PID of all processes we create
 through run-shell-command to enable reaping dead children. 
 Values are weak key-only hash tables containing process structures.")
 
 #+allegro
-(defparameter *allegro-unreaped-processes*
+(defvar *allegro-unreaped-processes*
   (make-hash-table :test #'eq :values NIL)
   "A has hash table storing all unreaped processes to keep them from being
 collected by the GC if the caller disposes of his reference before the process dies.")
