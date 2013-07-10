@@ -43,7 +43,7 @@
     (terpri stream)))
 
 (defun send-email (mail-output-stream)
-  "Handles the actual sending of the email via the sendmail program"
+  "Handles the actual sending of the email via the sendmail program."
   (unless (listp (to mail-output-stream))
     (setf (to mail-output-stream) (list (to mail-output-stream))))
   (unless (listp (cc mail-output-stream))
@@ -100,7 +100,11 @@
 		      &body body)
   "Binds STREAM to a MAIL-OUTPUT-STREAM created according to the other 
 arguments then executes BODY within that context. Automatically closes
-the stream and sends the email upon completion."
+the stream and sends the email upon completion.
+Arguments TO, CC, BCC, SUBJECT, FROM, REPLY-TO can be either a string or a list of strings, which will be concatenated appropriately. 
+:ATTACHMENTS is a list of attachment specifiers suitable for MAKE-MIME-OBJECT.
+:OTHER-HEADERS is an alist containing (field-name data ...). If multiple data elements are given, they are concatenated with separator #\Comma.
+"
   `(let ((,stream (make-instance 'mail-output-stream
 				 :to ,to
 				 :cc ,cc
@@ -112,8 +116,8 @@ the stream and sends the email upon completion."
 				 :subtype ,subtype
 				 :attachments ,attachments
 				 :other-headers ,other-headers)))
-    (unwind-protect
-	 (progn
-	   ,@body)
-      (close ,stream))))
+     (unwind-protect
+	  (progn
+	    ,@body)
+       (close ,stream))))
 

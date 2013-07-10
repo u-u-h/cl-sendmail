@@ -22,7 +22,18 @@
 (in-package :sendmail)
 
 (defun make-mime-object (attachment)
-  "Build a mime object for ATTACHMENT. Attachment can be a cl-mime:mime object, a pathname (will be wrapped according to cl-mime:lookup-mime guessing), or a list where the first element is a pathname, a stream open for reading, or a sequence, and the second and third value are type and subtype for the mime part.
+  "Build a mime object for ATTACHMENT, which must be one of the following attachement specifiers:
+* a cl-mime:mime object (passed through unchanged)
+* a pathname (mime type will be autodetected by cl-mime:lookup-mime)
+* a list of 3 or 4 elements: (thing type subtype &optinal encoding)
+  where type and subtype are strings used as mime type specification,
+  encoding is a babel-encodings::*supported-character-encodings* symbol
+  that will be used as charset option for type \"text\" mimes, and
+  THING can be one of
+** a pathname
+** a stream with element-type (unsigned-byte 8) open for reading
+** a vector of '(unsigned-byte 8)
+** a string (will be converted to octets by babel:string-to-octets, possibly using ENCODING and specifying charset in the mime object).
 Returns a cl-mime:mime object."
   (flet ((disposition-parameters (thing)
 	   (if (pathnamep thing)
@@ -52,23 +63,31 @@ Returns a cl-mime:mime object."
 	  :disposition-parameters
 	  (disposition-parameters attachment))))
       (list
-       (destructuring-bind (data type subtype)
+       (destructuring-bind 
+	     (data type subtype
+		   &optional (encoding babel:*default-character-encoding*))
 	   attachment
 	 (let ((data-seq (etypecase data
 			   (pathname (read-file data))
-			   ;; does not work for non-binary streams yet
 			   (stream (read-stream data))
 			   ((vector (unsigned-byte 8)) data)
-			   (string data))))
-	   (make-instance 'mime
-			  :type type :subtype subtype
-			  :content data-seq
-			  :encoding (if (string-equal type "text") 
-					:quoted-printable
-					:base64)
-			  :disposition "attachment"
-			  :disposition-parameters
-			  `(,@(disposition-parameters data)))))))))
+			   (string (babel:string-to-octets 
+				    data 
+				    :encoding encoding)))))
+	   (if (string-equal type "text")
+	       (make-instance 'text-mime
+			      :type type :subtype subtype
+			      :content data-seq
+			      :encoding :quoted-printable
+			      :charset (format nil "~A" encoding)
+			      :disposition "attachment")
+	       (make-instance 'mime
+			      :type type :subtype subtype
+			      :content data-seq
+			      :encoding :base64
+			      :disposition "attachment"
+			      :disposition-parameters
+			      `(,@(disposition-parameters data))))))))))
 
 (defun build-attachments (mail-output-stream)
   "Converts MAIL-OUTPUT-STREAM to a multipart MIME email. Converts all
