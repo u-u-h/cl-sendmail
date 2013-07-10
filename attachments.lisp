@@ -55,8 +55,7 @@ Returns a cl-mime:mime object."
 	  :content
 	  (read-file attachment)
 	  :encoding
-	  (if (string-equal type
-			    "text")
+	  (if (string-equal type "text")
 	      :quoted-printable
 	      :base64)
 	  :disposition "attachment"
@@ -78,7 +77,7 @@ Returns a cl-mime:mime object."
 	       (make-instance 'text-mime
 			      :type type :subtype subtype
 			      :content data-seq
-			      :encoding :quoted-printable
+			      :encoding :base64 ;; qprint:encode forces us
 			      :charset (format nil "~A" encoding)
 			      :disposition "attachment")
 	       (make-instance 'mime
