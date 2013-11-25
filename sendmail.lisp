@@ -95,6 +95,7 @@
 			      reply-to
 			      (type "text")
 			      (subtype "plain")
+			      charset
 			      attachments
 			      other-headers)
 		      &body body)
@@ -102,22 +103,28 @@
 arguments then executes BODY within that context. Automatically closes
 the stream and sends the email upon completion.
 Arguments TO, CC, BCC, SUBJECT, FROM, REPLY-TO can be either a string or a list of strings, which will be concatenated appropriately. 
+TYPE and SUBTYPE specify the Content-Type (default: text/plain). If some TYPE is \"text\", CHARSET can be used to specify an encoding (no default value). The value must be a valid encoding symbol from babel-encodings::*supported-character-encodings*.
 :ATTACHMENTS is a list of attachment specifiers suitable for MAKE-MIME-OBJECT.
 :OTHER-HEADERS is an alist containing (field-name data ...). If multiple data elements are given, they are concatenated with separator #\Comma.
 "
-  `(let ((,stream (make-instance 'mail-output-stream
-				 :to ,to
-				 :cc ,cc
-				 :bcc ,bcc
-				 :subject ,subject
-				 :from ,from
-				 :reply-to ,reply-to
-				 :type ,type
-				 :subtype ,subtype
-				 :attachments ,attachments
-				 :other-headers ,other-headers)))
-     (unwind-protect
-	  (progn
-	    ,@body)
-       (close ,stream))))
+  (let ((content-type (gensym "content-type")))
+    `(let* ((,content-type ,type)
+	    (,stream (make-instance (if (string-equal ,content-type "text")
+					'text-mail-output-stream
+					'mail-output-stream)
+				    :to ,to
+				    :cc ,cc
+				    :bcc ,bcc
+				    :subject ,subject
+				    :from ,from
+				    :reply-to ,reply-to
+				    :type ,content-type
+				    :subtype ,subtype
+				    :charset ,charset
+				    :attachments ,attachments
+				    :other-headers ,other-headers)))
+       (unwind-protect
+	    (progn
+	      ,@body)
+	 (close ,stream)))))
 
