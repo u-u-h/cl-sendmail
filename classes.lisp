@@ -69,6 +69,33 @@ be used directly. Use the other streams"))
   ()
   (:documentation "A MAIL-OUTPUT-STREAM intended for text-only emails"))
 
+(defmethod content ((text-stream text-mail-output-stream))
+  "Ensure that non-7-bit content is transformed to octet form."
+  (let ((raw-content (call-next-method)))
+    (if (and (not (eql (cl-mime:content-transfer-encoding text-stream)
+		       (mime::content-encoding text-stream)))
+	     (eql (mime::content-encoding text-stream) :7bit))
+	(cond
+	  ((stringp raw-content)
+	   (flexi-streams:make-in-memory-input-stream 
+	    (flexi-streams:string-to-octets 
+	     raw-content 
+	     :external-format (charset text-stream))))
+	  ((streamp raw-content)
+	   (if (flexi-streams:external-format-equal 
+		(flexi-streams:flexi-stream-external-format raw-content)
+		(charset text-stream))
+	       raw-content
+	       (flexi-streams:make-flexi-stream 
+		raw-content :external-format (charset text-stream))))
+	  ((eq raw-content NIL)
+	   NIL)
+	  (T
+	   (error
+	    "text-mail-output-stream content must be a string or a stream., but is ~A" 
+	    raw-content)))
+	raw-content)))
+
 
 (defclass multipart-mail-output-stream
     (mail-output-stream-mixin multipart-mime) 

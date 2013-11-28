@@ -25,10 +25,12 @@
 (defsystem :cl-sendmail
   :name "CL-SENDMAIL"
   :author "Robert Marlow <rob@bobturf.org>"
-  :maintainer "Robert Marlow <rob@bobturf.org>"
+  :maintainer "Utz-Uwe Haus <lisp@uuhaus.de>"
   :serial t
-  :version "0.5.6"
+  :version "0.6.0"
   :depends-on (:cl-mime
+	       ;; the version from <http://mr.gy/maintenance/cl-qprint/>
+	       (:version :cl-qprint "0.9" )
 	       :cl-base64
 	       :babel-streams
 	       :external-program

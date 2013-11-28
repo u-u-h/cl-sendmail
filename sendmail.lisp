@@ -121,6 +121,18 @@ TYPE and SUBTYPE specify the Content-Type (default: text/plain). If some TYPE is
 				    :type ,content-type
 				    :subtype ,subtype
 				    :charset ,charset
+				    ;; If charset is not 7-bit-clean
+				    ;; we play it safe: To enforce
+				    ;; transformation to quoted-printable
+				    ;; encoding we misuse cl-mime:
+				    ;; it will do the work for these
+				    ;; parameters magically (7bit is
+				    ;; decoded by #'identity, and then
+				    ;; encoded as QP)
+				    :content-encoding :7bit
+				    :encoding (if ,charset
+						  :quoted-printable
+						  :7bit)
 				    :attachments ,attachments
 				    :other-headers ,other-headers)))
        (unwind-protect
