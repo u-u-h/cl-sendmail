@@ -78,7 +78,9 @@
 	   
 	   ((string-equal (content-type mail-output-stream) "multipart")
 	    (change-class mail-output-stream
-			  'multipart-mail-output-stream)))))
+			  'multipart-mail-output-stream))
+	   (T (error 'cl-sendmail-limitation :message "Unhandled mail-output-stream type"
+		     :data mail-output-stream)))))
 
     (dolist (header/val (all-headers mail-output-stream))
       (format-header sendmail (car header/val) (cdr header/val)))

@@ -155,6 +155,14 @@ be used directly. Use the other streams"))
 	     (format stream "Mailer program returned non-zero exit code: ~d."
 		     (error-code condition)))))
 
+(define-condition cl-sendmail-limitation (error)
+  ((message :initarg :message :accessor message)
+   (data :initarg :data :accessor data))
+  (:report (lambda (condition stream)
+	     (format stream "CL-Sendmail is unable to perform what you requested: ~A.~%You may want to look at: ~A"
+		     (message condition)
+		     (data condition)))))
+
 
 (defmethod close :before ((stream mail-output-stream-mixin) &key &allow-other-keys)
     (restart-case
