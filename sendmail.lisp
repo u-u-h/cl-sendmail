@@ -107,36 +107,42 @@ TYPE and SUBTYPE specify the Content-Type (default: text/plain). If some TYPE is
 :ATTACHMENTS is a list of attachment specifiers suitable for MAKE-MIME-OBJECT.
 :OTHER-HEADERS is an alist containing (field-name data ...). If multiple data elements are given, they are concatenated with separator #\Comma.
 "
-  (let ((content-type (gensym "content-type")))
+  (let ((content-type (gensym "content-type"))
+	(common-args (gensym "m-o-s-stream-initargs")))
     `(let* ((,content-type ,type)
-	    (,stream (make-instance (if (string-equal ,content-type "text")
-					'text-mail-output-stream
-					'mail-output-stream)
-				    :to ,to
-				    :cc ,cc
-				    :bcc ,bcc
-				    :subject ,subject
-				    :from ,from
-				    :reply-to ,reply-to
-				    :type ,content-type
-				    :subtype ,subtype
-				    ,@(if charset `(:charset ,charset))
-				    ;; If charset is not 7-bit-clean
-				    ;; we play it safe: To enforce
-				    ;; transformation to quoted-printable
-				    ;; encoding we misuse cl-mime:
-				    ;; it will do the work for these
-				    ;; parameters magically (7bit is
-				    ;; decoded by #'identity, and then
-				    ;; encoded as QP)
-				    :content-encoding :7bit
-				    :encoding (if ,charset
-						  :quoted-printable
-						  :7bit)
-				    :attachments ,attachments
-				    :other-headers ,other-headers)))
+	    (,common-args (list :to ,to
+				:cc ,cc
+				:bcc ,bcc
+				:subject ,subject
+				:from ,from
+				:reply-to ,reply-to
+				:type ,content-type
+				:subtype ,subtype
+				;; If charset is not 7-bit-clean
+				;; we play it safe: To enforce
+				;; transformation to quoted-printable
+				;; encoding we misuse cl-mime:
+				;; it will do the work for these
+				;; parameters magically (7bit is
+				;; decoded by #'identity, and then
+				;; encoded as QP)
+				:content-encoding :7bit
+				:encoding ,(if charset
+					       :quoted-printable
+					     :7bit)
+				:attachments ,attachments
+				:other-headers ,other-headers))
+	    (,stream
+	     (if (string-equal ,content-type "text")
+		 (apply #'make-instance 
+			'text-mail-output-stream
+			,@(if charset `(:charset ,charset))
+			,common-args)
+	         (apply #'make-instance 
+			'mail-output-stream
+			,common-args))))
        (unwind-protect
-	    (progn
-	      ,@body)
+	   (progn
+	     ,@body)
 	 (close ,stream)))))
 
