@@ -27,7 +27,7 @@
   :author "Robert Marlow <rob@bobturf.org>"
   :maintainer "Utz-Uwe Haus <lisp@uuhaus.de>"
   :serial t
-  :version "0.6.0"
+  :version "0.6.1"
   :depends-on (:cl-mime
 	       ;; the version from <http://mr.gy/maintenance/cl-qprint/>
 	       (:version :cl-qprint "0.9" )
