@@ -109,32 +109,57 @@ TYPE and SUBTYPE specify the Content-Type (default: text/plain). If some TYPE is
 "
   (let ((content-type (gensym "content-type")))
     `(let* ((,content-type ,type)
-	    (,stream (make-instance (if (string-equal ,content-type "text")
-					'text-mail-output-stream
-					'mail-output-stream)
-				    :to ,to
-				    :cc ,cc
-				    :bcc ,bcc
-				    :subject ,subject
-				    :from ,from
-				    :reply-to ,reply-to
-				    :type ,content-type
-				    :subtype ,subtype
-				    :charset ,charset
-				    ;; If charset is not 7-bit-clean
-				    ;; we play it safe: To enforce
-				    ;; transformation to quoted-printable
-				    ;; encoding we misuse cl-mime:
-				    ;; it will do the work for these
-				    ;; parameters magically (7bit is
-				    ;; decoded by #'identity, and then
-				    ;; encoded as QP)
-				    :content-encoding :7bit
-				    :encoding (if ,charset
-						  :quoted-printable
-						  :7bit)
-				    :attachments ,attachments
-				    :other-headers ,other-headers)))
+	    (,stream 
+        (if (string-equal ,content-type "text")
+          (make-instance 
+            'text-mail-output-stream
+            :to ,to
+            :cc ,cc
+            :bcc ,bcc
+            :subject ,subject
+            :from ,from
+            :reply-to ,reply-to
+            :type ,content-type
+            :subtype ,subtype
+            :charset ,charset
+            ;; If charset is not 7-bit-clean
+            ;; we play it safe: To enforce
+            ;; transformation to quoted-printable
+            ;; encoding we misuse cl-mime:
+            ;; it will do the work for these
+            ;; parameters magically (7bit is
+            ;; decoded by #'identity, and then
+            ;; encoded as QP)
+            :content-encoding :7bit
+            :encoding (if ,charset
+                        :quoted-printable
+                        :7bit)
+            :attachments ,attachments
+            :other-headers ,other-headers)
+          (make-instance 
+            'mail-output-stream 
+            :to ,to
+            :cc ,cc
+            :bcc ,bcc
+            :subject ,subject
+            :from ,from
+            :reply-to ,reply-to
+            :type ,content-type
+            :subtype ,subtype
+            ;; If charset is not 7-bit-clean
+            ;; we play it safe: To enforce
+            ;; transformation to quoted-printable
+            ;; encoding we misuse cl-mime:
+            ;; it will do the work for these
+            ;; parameters magically (7bit is
+            ;; decoded by #'identity, and then
+            ;; encoded as QP)
+            :content-encoding :7bit
+            :encoding (if ,charset
+                        :quoted-printable
+                        :7bit)
+            :attachments ,attachments
+            :other-headers ,other-headers))))
        (unwind-protect
 	    (progn
 	      ,@body)
