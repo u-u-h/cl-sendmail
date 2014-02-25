@@ -104,27 +104,30 @@ appropriately."
 			     (content-subtype mail-output-stream))
 		:content
 		;; Add text input
-		(cons (make-instance
-		       (cond
-			 ((string-equal (content-type
-					 mail-output-stream)
-					"text")
-			  'text-mime)
-			 ((string-equal (content-type
-					 mail-output-stream)
-					"multipart")
-			  'multipart-mime)
-			 (t 'mime))
-		       :type (content-type mail-output-stream)
-		       :subtype (content-subtype mail-output-stream)
-		       :content
-		       (or (content mail-output-stream)
-			   (get-output-stream-string
-			    (mail-output-stream-stream
-			     mail-output-stream))))
-		      (mapcar
-		       #'make-mime-object
-		       (attachments mail-output-stream)))))
+        (let ((children (mapcar
+                          #'make-mime-object
+                          (attachments mail-output-stream))))
+          (if (string= (content-subtype mail-output-stream) "alternative")
+            children
+            (cons (make-instance
+                    (cond
+                      ((string-equal (content-type
+                                       mail-output-stream)
+                                     "text")
+                       'text-mime)
+                      ((string-equal (content-type
+                                       mail-output-stream)
+                                     "multipart")
+                       'multipart-mime)
+                      (t 'mime))
+                    :type (content-type mail-output-stream)
+                    :subtype (content-subtype mail-output-stream)
+                    :content
+                    (or (content mail-output-stream)
+                        (get-output-stream-string
+                          (mail-output-stream-stream
+                            mail-output-stream))))
+                  children)))))
   
 
 
