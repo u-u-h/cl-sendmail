@@ -120,7 +120,7 @@ TYPE and SUBTYPE specify the Content-Type (default: text/plain). If some TYPE is
 				    :reply-to ,reply-to
 				    :type ,content-type
 				    :subtype ,subtype
-				    :charset ,charset
+				    ,@(if charset `(:charset ,charset))
 				    ;; If charset is not 7-bit-clean
 				    ;; we play it safe: To enforce
 				    ;; transformation to quoted-printable
