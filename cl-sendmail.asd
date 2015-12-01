@@ -26,6 +26,8 @@
   :name "CL-SENDMAIL"
   :author "Robert Marlow <rob@bobturf.org>"
   :maintainer "Utz-Uwe Haus <lisp@uuhaus.de>"
+  :description "Common Lisp interface to use /usr/lib/sendmail for mail submission."
+  :license "LGPL-2"
   :serial t
   :version "0.6.1"
   :depends-on (:cl-mime
