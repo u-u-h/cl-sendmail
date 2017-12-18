@@ -77,7 +77,8 @@ If you want to keep your XML structure intact make a copy first."
 
 (defmacro descend ()
   `(dolist (child (node-children tree))
-    (when (listp child)
+    (when #+xmls-nodes-are-structs (node-p child)
+          #-xmls-nodes-are-structs (listp child)
       (process-xml child))))
 
 (def-element-handler "html" (tree) (*xhtml-email-parser*)
