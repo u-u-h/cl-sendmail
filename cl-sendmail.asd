@@ -29,7 +29,7 @@
   :description "Common Lisp interface to use /usr/lib/sendmail for mail submission."
   :license "LGPL-2"
   :serial t
-  :version "0.6.1"
+  :version "0.6.2"                      ; bumped to reflect update for XMLS 2+ compatibility
   :depends-on (:cl-mime
 	       ;; the version from <http://mr.gy/maintenance/cl-qprint/>
 	       (:version :cl-qprint "0.9" )
